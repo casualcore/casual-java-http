@@ -1,0 +1,16 @@
+[Bb]uild/
+.idea/
+javadoc/
+docs/source/casual-docs/
+docs/source/version
+*.iml
+*.class
+*.jar
+.gradle/
+# emacs #
+*~
+*.orig
+dist/
+out/
+gradle.properties
+secret.*
