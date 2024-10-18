@@ -17,3 +17,26 @@ Issue service calls such as:
 ```sh
 $curl -v -d @curl-data -H content-type:application/casual-x-octet http://10.106.219.132:8080/casual/casual%2fexample%2fecho
 ```
+
+## Supported content-types
+
+Supports the following content-types:
+ * application/casual-x-octet
+ * application/json
+ * application/casual-field
+ * application/casual-string
+ 
+The return content type is deduced from the service response buffer and is also one of the supported content-types.
+
+## Error
+
+Calls resulting in anything but TPSUCCESS:
+* ```TPENOENT``` generates 404 ( NOT_FOUND)
+* ```TPETIME``` generates 408 ( REQUEST_TIMEOUT)
+* Any other error generates a 500 ( INTERNAL_SERVER_ERROR) 
+
+These errors are also logged, as finest, with the service name, service return state and error state.
+
+## Exceptional behaviour
+
+Results in a 500 ( INTERNAL_SERVER_ERROR) and the exception is logged as a WARNING.
