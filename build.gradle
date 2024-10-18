@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2024, The casual project. All rights reserved.
+ *
+ * This software is licensed under the MIT license, https://opensource.org/licenses/MIT
+ */
+
+//-*- coding: utf-8 -*-
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'https://repo.spring.io/plugins-release' }
+    }
+}
+
+plugins {
+  id "org.sonarqube" version "5.1.0.4882"
+}
+
+defaultTasks 'build'
+
+allprojects{
+  tasks.withType(JavaCompile) { 
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    options.compilerArgs << "-Xlint:all" << "-Werror"
+  }
+  repositories {
+     mavenCentral()
+     mavenLocal()
+  }
+}
+
+subprojects{
+  apply from: "$rootProject.projectDir/versions.gradle"
+  apply plugin: 'java-library'
+  sonar {
+  properties {
+    properties["sonar.host.url"] = 'http://localhost:9000'
+      properties["sonar.verbose"] = "true"
+      properties['sonar.java.source'] = 21
+    }
+  }
+  apply plugin: 'jacoco'
+  test {
+    finalizedBy jacocoTestReport
+    useJUnitPlatform()
+      testLogging {
+        events "passed", "skipped", "failed"
+      }
+    }
+
+  jacocoTestReport {
+    reports {
+      xml.required = true
+      csv.required = false
+    }
+  }  
+    
+}
+
+project.ext {
+    casual_caller_subprojects = subprojects.findAll {
+        it.name.equals( "casual-caller-app" ) || it.name.equals( "casual-caller-api" )
+    }
+}
+
+configure(project.casual_caller_subprojects) {
+    apply from: "$rootProject.projectDir/publish.gradle"
+}

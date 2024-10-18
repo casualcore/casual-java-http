@@ -1,0 +1,38 @@
+
+/*
+ * Copyright (c) 2024 casual project. All rights reserved.
+ *
+ * This software is licensed under the MIT license, https://opensource.org/licenses/MIT
+ */
+
+group = 'se.laz.casual'
+version = '1.0.0'
+
+def gson_version = '2.10.1'
+def casual_version = '3.2.45'
+def casual_caller_version = '3.2.21'
+
+ext.libs = [
+  javaee_api: 'jakarta.platform:jakarta.jakartaee-api:10.0.0',
+  casual_api: "se.laz.casual:casual-api:${casual_version}",
+  casual_inbound_handler_api: "se.laz.casual:casual-inbound-handler-api:${casual_version}",
+  casual_fielded_annotations: "se.laz.casual:casual-fielded-annotations:${casual_version}",
+  casual_caller_api: "se.laz.casual:casual-caller-api:${casual_caller_version}",    
+  gson: "com.google.code.gson:gson:${gson_version}",
+  microprofile_config: 'org.eclipse.microprofile.config:microprofile-config-api:1.4',
+  // mandatory spock deps
+  groovy_bom: 'org.apache.groovy:groovy-bom:4.0.22',
+  groovy: 'org.apache.groovy:groovy',
+  spock_bom: 'org.spockframework:spock-bom:2.3-groovy-4.0',
+  spock_core: 'org.spockframework:spock-core',
+  // optional spock deps
+  byte_buddy: 'net.bytebuddy:byte-buddy:1.14.19',
+  objenesis: 'org.objenesis:objenesis:3.4',
+  hamcrest_core: 'org.hamcrest:hamcrest-all:2.2',
+  // additional test deps
+  commons_io: 'commons-io:commons-io:2.11.0',
+  system_lambda: 'com.github.stefanbirkner:system-lambda:1.2.1',
+  // for REST testing 
+  rest_easy_core: 'org.jboss.resteasy:resteasy-core:6.2.10.Final'
+  
+]
