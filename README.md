@@ -18,6 +18,8 @@ Issue service calls such as:
 $curl -v -d @curl-data -H content-type:application/casual-x-octet http://10.106.219.132:8080/casual/casual%2fexample%2fecho
 ```
 
+```casual/example/echo``` being the service in this case.
+
 ## Supported content-types
 
 Supports the following content-types:
