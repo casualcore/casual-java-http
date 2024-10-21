@@ -18,6 +18,9 @@ dependencies {
     compileOnly libs.casual_inbound_handler_api
     compileOnly libs.javaee_api
     implementation libs.commons_io
+    implementation libs.casual_inbound_api
+    implementation libs.casual_network_protocol
+    implementation libs.casual_service_discovery_extension
     // for spock
     testImplementation platform(libs.groovy_bom)
     testImplementation libs.groovy
