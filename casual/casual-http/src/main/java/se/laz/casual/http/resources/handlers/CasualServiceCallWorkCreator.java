@@ -5,6 +5,7 @@ import se.laz.casual.network.protocol.messages.service.CasualServiceCallRequestM
 
 import java.util.UUID;
 
+@FunctionalInterface
 public interface CasualServiceCallWorkCreator
 {
     CasualServiceCallWork create(UUID correlationId, CasualServiceCallRequestMessage requestMessage);

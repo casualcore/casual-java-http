@@ -12,7 +12,6 @@ import org.jboss.resteasy.mock.MockHttpRequest
 import org.jboss.resteasy.mock.MockHttpResponse
 import org.jboss.resteasy.spi.Dispatcher
 import se.laz.casual.api.buffer.CasualBuffer
-import se.laz.casual.api.buffer.CasualBufferType
 import se.laz.casual.api.buffer.type.CStringBuffer
 import se.laz.casual.api.buffer.type.JsonBuffer
 import se.laz.casual.api.buffer.type.OctetBuffer
@@ -200,6 +199,39 @@ class CasualServiceTest extends Specification
       CasualContentType.X_OCTET || CasualContentType.JSON    || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])  || {bytes -> JsonBuffer.of([bytes])}
       CasualContentType.JSON    || CasualContentType.X_OCTET || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])  || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || {bytes -> OctetBuffer.of([bytes])}
       CasualContentType.X_OCTET || CasualContentType.JSON    || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])  || {bytes -> JsonBuffer.of([bytes])}
+   }
+
+   @Unroll
+   def 'local serviceCall exceptional #mimeType'()
+   {
+      given:
+      Dispatcher dispatcher = MockDispatcherFactory.createDispatcher()
+      ExceptionHandler exceptionHandler = new ExceptionHandlerImpl()
+      ManagedExecutorService executorService = Mock(ManagedExecutorService){
+         runAsync(_) >> {
+            throw new IllegalArgumentException("very illegal")
+         }
+      }
+      LocalRequestHandler localRequestHandler = new LocalRequestHandler()
+      localRequestHandler.executorService = executorService
+      CasualService casualService = new CasualService(Mock(ServiceCaller), Mock(RemoteRequestHandler), localRequestHandler, exceptionHandler, serviceRegistryLookupServiceExists)
+
+      dispatcher.getRegistry().addSingletonResource(casualService)
+      MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
+              .contentType(mimeType)
+              .content(requestBuffer.getBytes().first)
+      MockHttpResponse response = new MockHttpResponse()
+      expect:
+      dispatcher.invoke(request, response)
+      response.getStatus() == Response.Status.INTERNAL_SERVER_ERROR.statusCode
+      response.outputHeaders['content-type'].first.toString() == CasualContentType.NULL
+      response.output.size() == 0
+      where:
+      mimeType                           || requestBuffer
+      CasualContentType.X_OCTET          || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)])
+      CasualContentType.FIELD            || FieldedTypeBuffer.create().write( key, content)
+      CasualContentType.JSON             || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])
+      CasualContentType.STRING           || CStringBuffer.of(content)
    }
 
 }

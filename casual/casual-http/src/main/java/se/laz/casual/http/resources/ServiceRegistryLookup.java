@@ -5,6 +5,7 @@
  */
 package se.laz.casual.http.resources;
 
+@FunctionalInterface
 public interface ServiceRegistryLookup
 {
     boolean serviceExists(String serviceName);
