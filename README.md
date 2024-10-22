@@ -3,6 +3,7 @@
 ## What is it?
 
 It's a JAX-RS application that provides the functionality to make ```TPNOTRAN``` calls to exported casual java services as well as imported casual services.
+If a service exist locally then that service is called, if not - tpcall is issued using casual-caller.
 
 ## Prerequisites
 
