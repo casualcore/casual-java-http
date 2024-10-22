@@ -21,7 +21,8 @@ import se.laz.casual.api.flags.Flag
 import se.laz.casual.api.flags.ServiceReturnState
 import se.laz.casual.http.resources.handlers.ExceptionHandler
 import se.laz.casual.http.resources.handlers.ExceptionHandlerImpl
-import se.laz.casual.http.resources.handlers.RequestHandler
+import se.laz.casual.http.resources.handlers.LocalRequestHandler
+import se.laz.casual.http.resources.handlers.RemoteRequestHandler
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -38,6 +39,10 @@ class CasualServiceTest extends Specification
    def content = '{"msg":"bazinga!"}'
    @Shared
    def key = 'FLD_STRING1'
+   @Shared
+   def serviceRegistryLookup = Mock(ServiceRegistryLookup) {
+      serviceExists(_) >> false
+   }
 
    @Unroll
    def 'service call ok #mimeType #expectedReturnMimeType'()
@@ -49,7 +54,7 @@ class CasualServiceTest extends Specification
             new ServiceCallResponse(ServiceReturnState.TPSUCCESS, ErrorState.OK, replyBuffer)
          }
       }
-      CasualService casualService = new CasualService(serviceCaller, new RequestHandler(), Mock(ExceptionHandler))
+      CasualService casualService = new CasualService(serviceCaller, new RemoteRequestHandler(), Mock(LocalRequestHandler), Mock(ExceptionHandler), serviceRegistryLookup)
       dispatcher.getRegistry().addSingletonResource(casualService)
       MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
               .contentType(mimeType)
@@ -83,7 +88,7 @@ class CasualServiceTest extends Specification
             new ServiceCallResponse(ServiceReturnState.TPFAIL, errorState, replyBuffer)
          }
       }
-      CasualService casualService = new CasualService(serviceCaller, new RequestHandler(), Mock(ExceptionHandler))
+      CasualService casualService = new CasualService(serviceCaller, new RemoteRequestHandler(), Mock(LocalRequestHandler), Mock(ExceptionHandler), serviceRegistryLookup)
       dispatcher.getRegistry().addSingletonResource(casualService)
       MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
               .contentType(mimeType)
@@ -111,7 +116,7 @@ class CasualServiceTest extends Specification
             throw new IllegalArgumentException(errorMessage)
          }
       }
-      CasualService casualService = new CasualService(serviceCaller, new RequestHandler(), new ExceptionHandlerImpl())
+      CasualService casualService = new CasualService(serviceCaller, new RemoteRequestHandler(), Mock(LocalRequestHandler), new ExceptionHandlerImpl(), serviceRegistryLookup)
       dispatcher.getRegistry().addSingletonResource(casualService)
       MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
               .contentType(mimeType)
