@@ -21,6 +21,7 @@ dependencies {
     implementation libs.casual_inbound_api
     implementation libs.casual_network_protocol
     implementation libs.casual_service_discovery_extension
+    implementation libs.casual_inbound_handler_casual_service
     // for spock
     testImplementation platform(libs.groovy_bom)
     testImplementation libs.groovy
