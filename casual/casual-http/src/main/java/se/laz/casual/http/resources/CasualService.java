@@ -19,6 +19,7 @@ import se.laz.casual.api.buffer.type.CStringBuffer;
 import se.laz.casual.api.buffer.type.JsonBuffer;
 import se.laz.casual.api.buffer.type.OctetBuffer;
 import se.laz.casual.api.buffer.type.fielded.FieldedTypeBuffer;
+import se.laz.casual.http.resources.handlers.CasualServiceCallWorkCreator;
 import se.laz.casual.http.resources.handlers.ExceptionHandler;
 import se.laz.casual.http.resources.handlers.LocalRequestHandler;
 import se.laz.casual.http.resources.handlers.RemoteRequestHandler;
@@ -36,6 +37,7 @@ public class CasualService
     private LocalRequestHandler localRequestHandler;
     private ExceptionHandler exceptionHandler;
     private ServiceRegistryLookup serviceRegistryLookup;
+    private CasualServiceCallWorkCreator workCreator;
     @Resource
     ManagedExecutorService executorService;
     public CasualService()
@@ -51,6 +53,7 @@ public class CasualService
         this.localRequestHandler = localRequestHandler;
         this.exceptionHandler = exceptionHandler;
         this.serviceRegistryLookup = serviceRegistryLookup;
+        this.workCreator = CasualServiceCallWork::new;
     }
 
     @POST
@@ -60,7 +63,7 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.X_OCTET, CasualServiceCallWork::new, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.X_OCTET, workCreator, exceptionHandler::handle);
         }
         return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, OctetBuffer::of, exceptionHandler::handle);
     }
@@ -72,7 +75,7 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.JSON, CasualServiceCallWork::new, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.JSON, workCreator, exceptionHandler::handle);
         }
         return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> JsonBuffer.of(Collections.singletonList(data)), exceptionHandler::handle);
     }
@@ -84,7 +87,7 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.FIELDED, CasualServiceCallWork::new, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.FIELDED, workCreator, exceptionHandler::handle);
         }
         return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> FieldedTypeBuffer.create(Collections.singletonList(data)), exceptionHandler::handle);
     }
@@ -96,7 +99,7 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.CSTRING, CasualServiceCallWork::new, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.CSTRING, workCreator, exceptionHandler::handle);
         }
         return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> CStringBuffer.of(Collections.singletonList(data)), exceptionHandler::handle);
     }
