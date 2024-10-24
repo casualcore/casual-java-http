@@ -5,6 +5,7 @@
  */
 package se.laz.casual.http.resources.handlers;
 
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import org.apache.commons.io.IOUtils;
@@ -38,15 +39,27 @@ public class RemoteRequestHandler
                 CasualBuffer responseBuffer = serviceCallResponse.casualBuffer();
                 String contentType = ContentTypeConverter.convert(CasualBufferType.unmarshall(responseBuffer.getType()));
                 StreamingOutput stream = outputStream -> outputStream.write(responseBuffer.getBytes().getFirst());
-                return Response.ok(stream).header("content-type", contentType).build();
+                return Response.ok(stream).header(HttpHeaders.CONTENT_TYPE, contentType).build();
             }
-            Response.Status status = ErrorStateConverter.convert(serviceCallResponse.errorState());
             LOG.finest(() -> "service call to " + serviceName + " failed: " + serviceCallResponse.serviceReturnState() + " " + serviceCallResponse.errorState());
-            return Response.status(status).header("content-type", CasualContentType.NULL).build();
+            return createErrorResponse(serviceCallResponse);
         }
         catch (Exception e)
         {
             return exceptionHandler.handle(e);
         }
+    }
+
+    private Response createErrorResponse(ServiceCallResponse serviceCallResponse)
+    {
+        Response.Status status = ErrorStateConverter.convert(serviceCallResponse.errorState());
+        if(null != serviceCallResponse.casualBuffer())
+        {
+            CasualBuffer responseBuffer = serviceCallResponse.casualBuffer();
+            String contentType = ContentTypeConverter.convert(CasualBufferType.unmarshall(responseBuffer.getType()));
+            StreamingOutput stream = outputStream -> outputStream.write(responseBuffer.getBytes().getFirst());
+            return Response.status(status).entity(stream).header(HttpHeaders.CONTENT_TYPE, contentType).build();
+        }
+        return Response.status(status).header(HttpHeaders.CONTENT_TYPE, CasualContentType.NULL).build();
     }
 }

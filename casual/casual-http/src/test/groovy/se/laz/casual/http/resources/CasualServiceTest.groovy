@@ -6,6 +6,7 @@
 package se.laz.casual.http.resources
 
 import jakarta.enterprise.concurrent.ManagedExecutorService
+import jakarta.ws.rs.core.HttpHeaders
 import jakarta.ws.rs.core.Response
 import org.jboss.resteasy.mock.MockDispatcherFactory
 import org.jboss.resteasy.mock.MockHttpRequest
@@ -77,7 +78,7 @@ class CasualServiceTest extends Specification
       expect:
       dispatcher.invoke(request, response)
       response.getStatus() == Response.Status.OK.statusCode
-      response.outputHeaders['content-type'].first.toString().contains(expectedReturnMimeType)
+      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString().contains(expectedReturnMimeType)
       CasualBuffer responseBuffer = creatorFunction(response.output)
       responseBuffer.getBytes() == requestBuffer.getBytes()
       where:
@@ -110,12 +111,40 @@ class CasualServiceTest extends Specification
       expect:
       dispatcher.invoke(request, response)
       response.getStatus() == ErrorStateConverter.convert(errorState).statusCode
-      response.outputHeaders['content-type'].first == (CasualContentType.NULL)
+      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first == (CasualContentType.NULL)
       response.output.size() == 0
       where:
-      mimeType                  || errorState          || requestBuffer                                              || replyBuffer                                                || creatorFunction
-      CasualContentType.X_OCTET || ErrorState.TPENOENT || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || {bytes -> OctetBuffer.of([bytes])}
-      CasualContentType.FIELD   || ErrorState.TPETIME  || FieldedTypeBuffer.create().write( key, content)            || FieldedTypeBuffer.create().write( key, content)            || {bytes -> FieldedTypeBuffer.create([bytes])}
+      mimeType                  || errorState          || requestBuffer                                              || replyBuffer  || creatorFunction
+      CasualContentType.X_OCTET || ErrorState.TPENOENT || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || null         || {bytes -> OctetBuffer.of([bytes])}
+      CasualContentType.FIELD   || ErrorState.TPETIME  || FieldedTypeBuffer.create().write( key, content)            || null         || {bytes -> FieldedTypeBuffer.create([bytes])}
+   }
+
+   @Unroll
+   def 'remote service call error but with reply buffer #errorState #mimeType'()
+   {
+      given:
+      Dispatcher dispatcher = MockDispatcherFactory.createDispatcher()
+      ServiceCaller serviceCaller = Mock(ServiceCaller){
+         1 * makeServiceCall(_, serviceName, Flag.of(AtmiFlags.TPNOTRAN)) >> { CasualBuffer msg, String serviceName, Flag<AtmiFlags> flags ->
+            new ServiceCallResponse(ServiceReturnState.TPFAIL, errorState, replyBuffer)
+         }
+      }
+      CasualService casualService = new CasualService(serviceCaller, new RemoteRequestHandler(), Mock(LocalRequestHandler), Mock(ExceptionHandler), serviceRegistryLookupServiceDoesNotExist)
+      dispatcher.getRegistry().addSingletonResource(casualService)
+      MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
+              .contentType(mimeType)
+              .content(requestBuffer.getBytes().first)
+      MockHttpResponse response = new MockHttpResponse()
+      expect:
+      dispatcher.invoke(request, response)
+      CasualBuffer responseBuffer = creatorFunction(response.getOutput())
+      response.getStatus() == ErrorStateConverter.convert(errorState).statusCode
+      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString().contains(mimeType)
+      responseBuffer.getBytes() == replyBuffer.getBytes()
+      where:
+      mimeType                  || errorState           || requestBuffer                                              || replyBuffer                                                        || creatorFunction
+      CasualContentType.X_OCTET || ErrorState.TPESVCERR || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)])         || {bytes -> OctetBuffer.of([bytes])}
+      CasualContentType.FIELD   || ErrorState.TPESVCFAIL|| FieldedTypeBuffer.create().write( key, content)            || FieldedTypeBuffer.create().write( key, content)                    || {bytes -> FieldedTypeBuffer.create([bytes])}
    }
 
    @Unroll
@@ -138,7 +167,7 @@ class CasualServiceTest extends Specification
       expect:
       dispatcher.invoke(request, response)
       response.getStatus() == Response.Status.INTERNAL_SERVER_ERROR.statusCode
-      response.outputHeaders['content-type'].first.toString() == CasualContentType.NULL
+      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString() == CasualContentType.NULL
       response.output.size() == 0
       where:
       mimeType                           || requestBuffer
@@ -187,7 +216,7 @@ class CasualServiceTest extends Specification
       expect:
       dispatcher.invoke(request, response)
       response.getStatus() == Response.Status.OK.statusCode
-      response.outputHeaders['content-type'].first.toString().contains(expectedReturnMimeType)
+      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString().contains(expectedReturnMimeType)
       CasualBuffer responseBuffer = creatorFunction(response.output)
       responseBuffer.getBytes() == requestBuffer.getBytes()
       where:
@@ -224,7 +253,7 @@ class CasualServiceTest extends Specification
       expect:
       dispatcher.invoke(request, response)
       response.getStatus() == Response.Status.INTERNAL_SERVER_ERROR.statusCode
-      response.outputHeaders['content-type'].first.toString() == CasualContentType.NULL
+      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString() == CasualContentType.NULL
       response.output.size() == 0
       where:
       mimeType                           || requestBuffer
