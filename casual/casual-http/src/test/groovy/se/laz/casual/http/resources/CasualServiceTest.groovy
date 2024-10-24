@@ -263,4 +263,96 @@ class CasualServiceTest extends Specification
       CasualContentType.STRING           || CStringBuffer.of(content)
    }
 
+   @Unroll
+   def 'local service call error #mimeType #expectedReturnMimeType'()
+   {
+      given:
+      Dispatcher dispatcher = MockDispatcherFactory.createDispatcher()
+      CompletableFuture<Void> future = new CompletableFuture<>()
+      ManagedExecutorService executorService = Mock(ManagedExecutorService){
+         runAsync(_) >> {
+            future.complete(null)
+            return future
+         }
+      }
+      LocalRequestHandler localRequestHandler = new LocalRequestHandler()
+      localRequestHandler.executorService = executorService
+      ServiceBuffer serviceBuffer = new ServiceBuffer(replyBuffer.getType(), replyBuffer.getBytes().stream().collect(Collectors.toList()))
+      CasualServiceCallReplyMessage replyMessage = CasualServiceCallReplyMessage.createBuilder()
+              .setServiceBuffer(serviceBuffer)
+              .setError(errorState)
+              .setXid(XID.NULL_XID)
+              .build()
+      CasualServiceCallWork work
+      CasualServiceCallWorkCreator workCreator = Mock(CasualServiceCallWorkCreator){
+         create(_, _) >> { UUID correlationId, CasualServiceCallRequestMessage requestMessage ->
+            CasualServiceCallWork createdWork = new CasualServiceCallWork(correlationId, requestMessage)
+            createdWork.response = CasualNWMessageImpl.of(correlationId, replyMessage)
+            work = createdWork
+         }
+      }
+      CasualService casualService = new CasualService(Mock(ServiceCaller), Mock(RemoteRequestHandler), localRequestHandler, Mock(ExceptionHandler), serviceRegistryLookupServiceExists)
+      casualService.workCreator = workCreator
+      dispatcher.getRegistry().addSingletonResource(casualService)
+      MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
+              .contentType(mimeType)
+              .content(requestBuffer.getBytes().first)
+      MockHttpResponse response = new MockHttpResponse()
+      expect:
+      dispatcher.invoke(request, response)
+      response.getStatus() == expectedStatus.statusCode
+      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString().contains(expectedReturnMimeType)
+      CasualBuffer responseBuffer = creatorFunction(response.output)
+      responseBuffer.getBytes() == requestBuffer.getBytes()
+      where:
+      errorState           || expectedStatus                          || mimeType                  || expectedReturnMimeType    || requestBuffer                                              || replyBuffer                                                || creatorFunction
+      ErrorState.TPETIME   || Response.Status.REQUEST_TIMEOUT         || CasualContentType.X_OCTET || CasualContentType.X_OCTET || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)]) || {bytes -> OctetBuffer.of([bytes])}
+      ErrorState.TPESVCERR || Response.Status.INTERNAL_SERVER_ERROR   || CasualContentType.FIELD   || CasualContentType.FIELD   || FieldedTypeBuffer.create().write( key, content)            || FieldedTypeBuffer.create().write( key, content)            || {bytes -> FieldedTypeBuffer.create([bytes])}
+      ErrorState.TPESVCFAIL|| Response.Status.INTERNAL_SERVER_ERROR   || CasualContentType.JSON    || CasualContentType.JSON    || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])  || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])  || {bytes -> JsonBuffer.of([bytes])}
+   }
+
+   def 'local service call error and no service call reply data'()
+   {
+      given:
+      Dispatcher dispatcher = MockDispatcherFactory.createDispatcher()
+      CompletableFuture<Void> future = new CompletableFuture<>()
+      ManagedExecutorService executorService = Mock(ManagedExecutorService){
+         runAsync(_) >> {
+            future.complete(null)
+            return future
+         }
+      }
+      LocalRequestHandler localRequestHandler = new LocalRequestHandler()
+      localRequestHandler.executorService = executorService
+      CasualServiceCallReplyMessage replyMessage = CasualServiceCallReplyMessage.createBuilder()
+              .setServiceBuffer(ServiceBuffer.empty())
+              .setError(errorState)
+              .setXid(XID.NULL_XID)
+              .build()
+      CasualServiceCallWork work
+      CasualServiceCallWorkCreator workCreator = Mock(CasualServiceCallWorkCreator){
+         create(_, _) >> { UUID correlationId, CasualServiceCallRequestMessage requestMessage ->
+            CasualServiceCallWork createdWork = new CasualServiceCallWork(correlationId, requestMessage)
+            createdWork.response = CasualNWMessageImpl.of(correlationId, replyMessage)
+            work = createdWork
+         }
+      }
+      CasualService casualService = new CasualService(Mock(ServiceCaller), Mock(RemoteRequestHandler), localRequestHandler, Mock(ExceptionHandler), serviceRegistryLookupServiceExists)
+      casualService.workCreator = workCreator
+      dispatcher.getRegistry().addSingletonResource(casualService)
+      MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
+              .contentType(mimeType)
+              .content(requestBuffer.getBytes().first)
+      MockHttpResponse response = new MockHttpResponse()
+      expect:
+      dispatcher.invoke(request, response)
+      response.getStatus() == expectedStatus.statusCode
+      response.output.size() == 0
+      where:
+      errorState           || expectedStatus                          || mimeType                  || expectedReturnMimeType    || requestBuffer
+      ErrorState.TPETIME   || Response.Status.REQUEST_TIMEOUT         || CasualContentType.X_OCTET || CasualContentType.X_OCTET || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)])
+      ErrorState.TPESVCERR || Response.Status.INTERNAL_SERVER_ERROR   || CasualContentType.FIELD   || CasualContentType.FIELD   || FieldedTypeBuffer.create().write( key, content)
+      ErrorState.TPESVCFAIL|| Response.Status.INTERNAL_SERVER_ERROR   || CasualContentType.JSON    || CasualContentType.JSON    || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])
+   }
+
 }
