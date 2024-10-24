@@ -63,9 +63,9 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.X_OCTET, workCreator, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.X_OCTET, workCreator, exceptionHandler);
         }
-        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, OctetBuffer::of, exceptionHandler::handle);
+        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, OctetBuffer::of, exceptionHandler);
     }
 
     @POST
@@ -75,9 +75,9 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.JSON, workCreator, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.JSON, workCreator, exceptionHandler);
         }
-        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> JsonBuffer.of(Collections.singletonList(data)), exceptionHandler::handle);
+        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> JsonBuffer.of(Collections.singletonList(data)), exceptionHandler);
     }
 
     @POST
@@ -87,9 +87,9 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.FIELDED, workCreator, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.FIELDED, workCreator, exceptionHandler);
         }
-        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> FieldedTypeBuffer.create(Collections.singletonList(data)), exceptionHandler::handle);
+        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> FieldedTypeBuffer.create(Collections.singletonList(data)), exceptionHandler);
     }
 
     @POST
@@ -99,10 +99,8 @@ public class CasualService
     {
         if(serviceRegistryLookup.serviceExists(serviceName))
         {
-            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.CSTRING, workCreator, exceptionHandler::handle);
+            return localRequestHandler.handle(serviceName, inputStream, CasualBufferType.CSTRING, workCreator, exceptionHandler);
         }
-        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> CStringBuffer.of(Collections.singletonList(data)), exceptionHandler::handle);
+        return remoteRequestHandler.handle(serviceCaller, serviceName, inputStream, data -> CStringBuffer.of(Collections.singletonList(data)), exceptionHandler);
     }
-
-
 }

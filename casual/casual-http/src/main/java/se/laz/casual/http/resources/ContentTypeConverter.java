@@ -13,14 +13,13 @@ public class ContentTypeConverter
     {}
     public static String convert(CasualBufferType type)
     {
-        switch (type)
+        return switch (type)
         {
-            case JSON: return CasualContentType.JSON;
-            case CSTRING: return CasualContentType.STRING;
-            case FIELDED: return CasualContentType.FIELD;
-            case X_OCTET: return CasualContentType.X_OCTET;
-            default:
-                throw new IllegalArgumentException("Unsupported content type: " + type);
-        }
+            case JSON -> CasualContentType.JSON;
+            case CSTRING -> CasualContentType.STRING;
+            case FIELDED -> CasualContentType.FIELD;
+            case X_OCTET -> CasualContentType.X_OCTET;
+            default -> throw new IllegalArgumentException("Unsupported content type: " + type);
+        };
     }
 }
