@@ -5,6 +5,7 @@
  */
 package se.laz.casual.http.resources.handlers;
 
+import jakarta.ejb.EJBTransactionRolledbackException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -43,6 +44,10 @@ public class RemoteRequestHandler
             }
             LOG.finest(() -> "service call to " + serviceName + " failed: " + serviceCallResponse.serviceReturnState() + " " + serviceCallResponse.errorState());
             return createErrorResponse(serviceCallResponse);
+        }
+        catch(EJBTransactionRolledbackException e)
+        {
+            return Response.status(Response.Status.REQUEST_TIMEOUT).header(HttpHeaders.CONTENT_TYPE, CasualContentType.NULL).build();
         }
         catch (Exception e)
         {
