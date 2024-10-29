@@ -178,34 +178,6 @@ class CasualServiceTest extends Specification
       CasualContentType.STRING           || CStringBuffer.of(content)
    }
 
-   def 'remote serviceCall rollback - TPETIME #mimeType'()
-   {
-      given:
-      Dispatcher dispatcher = MockDispatcherFactory.createDispatcher()
-      ServiceCaller serviceCaller = Mock(ServiceCaller){
-         1 * makeServiceCall(_, serviceName, Flag.of(AtmiFlags.TPNOTRAN)) >> { CasualBuffer msg, String serviceName, Flag<AtmiFlags> flags ->
-            throw new EJBTransactionRolledbackException()
-         }
-      }
-      CasualService casualService = new CasualService(serviceCaller, new RemoteRequestHandler(), Mock(LocalRequestHandler), new ExceptionHandlerImpl(), serviceRegistryLookupServiceDoesNotExist)
-      dispatcher.getRegistry().addSingletonResource(casualService)
-      MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
-              .contentType(mimeType)
-              .content(requestBuffer.getBytes().first)
-      MockHttpResponse response = new MockHttpResponse()
-      expect:
-      dispatcher.invoke(request, response)
-      response.getStatus() == Response.Status.REQUEST_TIMEOUT.statusCode
-      response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString() == CasualContentType.NULL
-      response.output.size() == 0
-      where:
-      mimeType                           || requestBuffer
-      CasualContentType.X_OCTET          || OctetBuffer.of([content.getBytes(StandardCharsets.UTF_8)])
-      CasualContentType.FIELD            || FieldedTypeBuffer.create().write( key, content)
-      CasualContentType.JSON             || JsonBuffer.of([content.getBytes(StandardCharsets.UTF_8)])
-      CasualContentType.STRING           || CStringBuffer.of(content)
-   }
-
    // local service tests
    @Unroll
    def 'local service call ok #mimeType #expectedReturnMimeType'()

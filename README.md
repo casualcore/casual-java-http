@@ -5,9 +5,7 @@
 It's a JAX-RS application that provides the functionality to make ```TPNOTRAN``` calls to exported casual java services as well as imported casual services.
 If a service exist locally then that service is called, if not - tpcall is issued using casual-caller.
 
-Note that if JTA timeouts due to calling a service that takes longer time than the application server configured JTA timeout:
-* for a remote service, this will be reported as TPETIME as we know that the only reason for a EJBTransactionRolledbackException is due to JTA timeout
-* for a local service, we can not differentiate between JTA timeout and some other EJBTransactionRolledbackException
+Note that if JTA timeouts due to calling a service that takes longer time than the application server configured JTA timeout, remote or local, you will get a response with 408 ( REQUEST_TIMEOUT). 
 
 ## Prerequisites
 
