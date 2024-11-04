@@ -26,8 +26,8 @@ publishing {
                 }
             }
             pom {
-                name = 'Casual Caller'
-                description = 'Casual Caller - application for outbound communication with casual middleware.'
+                name = 'Casual Java Http'
+                description = 'Casual Java Http - a JAX-RS application that provides the functionality to make TPNOTRAN tpcalls as well as calls to local services'
                 url = 'http://casual.laz.se'
 
                 licenses {
@@ -37,9 +37,9 @@ publishing {
                     }
                 }
                 scm {
-                    connection = 'scm:git:ssh://github.com:casualcore/casual-caller.git'
-                    developerConnection = 'scm:git:ssh://github.com:casualcore/casual-caller.git'
-                    url = 'https://github.com/casualcore/casual-caller'
+                    connection = 'scm:git:ssh://github.com:casualcore/casual-java-http.git'
+                    developerConnection = 'scm:git:ssh://github.com:casualcore/casual-java-http.git'
+                    url = 'https://github.com/casualcore/casual-java-http'
                 }
                 developers {
                     developer {
