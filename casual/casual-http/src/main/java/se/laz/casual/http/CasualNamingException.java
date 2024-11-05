@@ -3,18 +3,16 @@
  *
  * This software is licensed under the MIT license, https://opensource.org/licenses/MIT
  */
-package se.laz.casual.http.resources;
+package se.laz.casual.http;
 
 import se.laz.casual.api.CasualRuntimeException;
 
-public class ServiceCallFailedException extends CasualRuntimeException
+import javax.naming.NamingException;
+
+public class CasualNamingException extends CasualRuntimeException
 {
     private static final long serialVersionUID = 1L;
-    public ServiceCallFailedException(String s)
-    {
-        super(s);
-    }
-    public ServiceCallFailedException(InterruptedException e)
+    public CasualNamingException(NamingException e)
     {
         super(e);
     }

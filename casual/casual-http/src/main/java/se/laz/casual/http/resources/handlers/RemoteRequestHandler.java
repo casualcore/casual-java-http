@@ -21,7 +21,6 @@ import se.laz.casual.http.resources.ServiceCallResponse;
 import se.laz.casual.http.resources.ServiceCaller;
 
 import java.io.InputStream;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 public class RemoteRequestHandler

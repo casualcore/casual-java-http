@@ -5,9 +5,7 @@
  */
 package se.laz.casual.http.resources;
 
-import jakarta.annotation.Resource;
 import jakarta.ejb.Stateless;
-import jakarta.enterprise.concurrent.ManagedExecutorService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -38,8 +36,6 @@ public class CasualService
     private ExceptionHandler exceptionHandler;
     private ServiceRegistryLookup serviceRegistryLookup;
     private CasualServiceCallWorkCreator workCreator;
-    @Resource
-    ManagedExecutorService executorService;
     public CasualService()
     {
         // NOP ctor needed for CDI

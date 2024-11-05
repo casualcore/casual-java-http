@@ -5,7 +5,6 @@
  */
 package se.laz.casual.http.resources
 
-import jakarta.ejb.EJBTransactionRolledbackException
 import jakarta.enterprise.concurrent.ManagedExecutorService
 import jakarta.ws.rs.core.HttpHeaders
 import jakarta.ws.rs.core.Response
@@ -67,17 +66,21 @@ class CasualServiceTest extends Specification
       Dispatcher dispatcher = MockDispatcherFactory.createDispatcher()
       ServiceCaller serviceCaller = Mock(ServiceCaller){
          1 * makeServiceCall(_, serviceName, Flag.of(AtmiFlags.TPNOTRAN)) >> { CasualBuffer msg, String serviceName, Flag<AtmiFlags> flags ->
+            assert msg.getBytes().first == requestBuffer.getBytes().first
             new ServiceCallResponse(ServiceReturnState.TPSUCCESS, ErrorState.OK, replyBuffer)
          }
       }
-      CasualService casualService = new CasualService(serviceCaller, new RemoteRequestHandler(), Mock(LocalRequestHandler), Mock(ExceptionHandler), serviceRegistryLookupServiceDoesNotExist)
+      LocalRequestHandler localRequestHandler = Mock(LocalRequestHandler){
+         0 * handle(*_)
+      }
+      CasualService casualService = new CasualService(serviceCaller, new RemoteRequestHandler(), localRequestHandler, Mock(ExceptionHandler), serviceRegistryLookupServiceDoesNotExist)
       dispatcher.getRegistry().addSingletonResource(casualService)
       MockHttpRequest request = MockHttpRequest.post("${root}/${serviceName}")
               .contentType(mimeType)
               .content(requestBuffer.getBytes().first)
       MockHttpResponse response = new MockHttpResponse()
-      expect:
       dispatcher.invoke(request, response)
+      expect:
       response.getStatus() == Response.Status.OK.statusCode
       response.outputHeaders[HttpHeaders.CONTENT_TYPE].first.toString().contains(expectedReturnMimeType)
       CasualBuffer responseBuffer = creatorFunction(response.output)
@@ -191,8 +194,7 @@ class CasualServiceTest extends Specification
             return future
          }
       }
-      LocalRequestHandler localRequestHandler = new LocalRequestHandler()
-      localRequestHandler.executorService = executorService
+      LocalRequestHandler localRequestHandler = new LocalRequestHandler(executorService)
       ServiceBuffer serviceBuffer = new ServiceBuffer(replyBuffer.getType(), replyBuffer.getBytes().stream().collect(Collectors.toList()))
       CasualServiceCallReplyMessage replyMessage = CasualServiceCallReplyMessage.createBuilder()
               .setServiceBuffer(serviceBuffer)

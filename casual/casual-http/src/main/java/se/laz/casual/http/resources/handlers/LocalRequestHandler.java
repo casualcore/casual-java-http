@@ -5,8 +5,8 @@
  */
 package se.laz.casual.http.resources.handlers;
 
-import jakarta.annotation.Resource;
 import jakarta.enterprise.concurrent.ManagedExecutorService;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -30,8 +30,18 @@ import java.util.UUID;
 
 public class LocalRequestHandler
 {
-    @Resource
     private ManagedExecutorService executorService;
+
+    public LocalRequestHandler()
+    {
+        // CDI NOP constructor
+    }
+
+    @Inject
+    public LocalRequestHandler(ManagedExecutorService executorService)
+    {
+        this.executorService = executorService;
+    }
 
     public Response handle(String serviceName, InputStream inputStream, CasualBufferType bufferType, CasualServiceCallWorkCreator workCreator, ExceptionHandler exceptionHandler)
     {
