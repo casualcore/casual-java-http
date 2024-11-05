@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2024, The casual project. All rights reserved.
+ *
+ * This software is licensed under the MIT license, https://opensource.org/licenses/MIT
+ */
+
+//-*- coding: utf-8 -*-
+
+plugins {
+   id 'java-library'
+   id 'jacoco'
+   id 'groovy'
+}
+
+dependencies {
+    compileOnly libs.casual_api
+    compileOnly libs.casual_caller_api
+    compileOnly libs.casual_inbound_handler_api
+    compileOnly libs.javaee_api
+    implementation libs.commons_io
+    implementation libs.casual_inbound_api
+    implementation libs.casual_network_protocol
+    implementation libs.casual_service_discovery_extension
+    implementation libs.casual_inbound_handler_casual_service
+    // for spock
+    testImplementation platform(libs.groovy_bom)
+    testImplementation libs.groovy
+    testImplementation platform(libs.spock_bom)
+    testImplementation libs.spock_core
+    testRuntimeOnly libs.byte_buddy
+    testRuntimeOnly libs.objenesis
+
+    // REST test
+    testImplementation libs.rest_easy_core
+
+    // casual
+    testImplementation libs.casual_api
+    testImplementation libs.casual_caller_api
+    
+    // Others
+    testImplementation libs.javaee_api
+    testImplementation libs.gson
+}
+
+
